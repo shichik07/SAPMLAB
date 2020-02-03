@@ -595,6 +595,7 @@ par.nSub                    = length(filenamePostICs);
 
 
 for iSub = 1:par.nSub
+    iSub = 5
     
     rejects = [filenamePostICs{iSub}(1:11), '_rejected_trls_2']; %create filename for trl reject data
     load(filenamePostICs{iSub},'data','par');
@@ -632,46 +633,77 @@ for iSub = 1:par.nSub
     addpath(functions)
     rejected_trials2 = get_trlrej(par.visualArtf, data.sampleinfo);
     save(rejects,'rejected_trials2')
-    
-    % Note: participant 16 had extremely noisy data, over 160 trials had to
-    % be removed and that was a conservative guess. Participant 15 was
-    % similarly problematic. However, the problem was not excessive
-    % movement, but drowsyness. The second part of the experiment was
-    % cluttered with alpha oscillations. Removed ~70 trials, perhaps to
-    % conservative as well.
+   
 end
 %% Rejecting trials and interpolating channels (decided to interpolate)
 % part 16 = [35, 50]; channels to interpolate
+% part 15 = [39]; Note participant 15 was probably asleep for the better
+% part 17 = [42, 55];
+% part of the second half of the experiment. Significant
+% alpha-contamination of a large proportion of trials. My fear was right,
+% in total, I had to exclude half the dataset for this participant.
+clear all; close all; clc
+dbstop if error
+ft_defaults;
 
+
+Bad_channels = {% sID, [IC to remove]
+    16, {'35' '50'};
+    13, {};
+    14, {};
+    15, {'39'};
+    17, {'42'; '55'}
+    };
+
+Bad_channels{[Bad_channels{:,1}]==iSub,2};
 %% Import behavioral data - again, I use parts of the scripts used by the original authors
 
 dirs.home                   = 'C:\Users\juliu\OneDrive\Dokumente\PhD-Thesis\Studying\Signal Processing Course\Experiment and Analysis\';
+% load the first rejected trials
+dirs.rej                    = fullfile(dirs.home,'Raw data','preTR');
+cd(dirs.rej);
+filenameRej1                = dir(['*_rejected_trls.mat']);
+filenameRej1                = {filenameRej1.name};
+
+% load the secondly rejected trials and IC corrected data 
 dirs.log                    = fullfile(dirs.home,'Raw data','ICA');
 cd(dirs.log);
-filenameICs                 = dir(['ICA_','*_.mat']);
-filenameICs                 = {filenameICs.name};
-par.nSub                    = length(filenameICs);
-
+filenameRej2                = dir(['*_rejected_trls_2.mat']);
+filenameRej2                = {filenameRej2.name};
+filenamepostICs             = dir(['*postIC.mat']);
+filenamepostICs             = {filenamepostICs.name};
+par.nSub                    = length(filenamepostICs);
 
 for iSub = 1:par.nSub;
 
-% load data from previous step
-    load(filenameFinalPP{iSub})
+    % load data from previous step
+    cd(dirs.rej) 
+    load(filenameRej1{iSub})
+    cd(dirs.log)
+    load(filenamepostICs{iSub})
+    load(filenameRej2{iSub})
     
     % provide information on screen.
     sprintf('TF analysis of sID = %d',par.sID)
      %% Trialinformation.
+    % Julius Kricheldorff: I made a mistake here with my reject function. I
+    % did not adjust the function for a variable length of trials, but set
+    % them to 640 trials (the original task length) by default. I adjusted
+    % the function now, but I still have to fix the faulty arrays here.
     
     % retrieve trialindex of remaining EEG epochs.
-    trlidx = find(~rejectedtrials);
-    if ~isempty(rejectedtrials2)
-        trlidx = trlidx(~rejectedtrials2);
+    trlidx = find(~rejected_trials);
+    if ~isempty(rejected_trials2)
+        if length(rejected_trials2)
+            rejected_trials2 = rejected_trials2(1:length(trlidx)); %here i fixed my mistake
+        end
+        trlidx = trlidx(~rejected_trials2);
     end
     if strcmpi(par.sID,'25'); trlidx = trlidx + 1; end %sID025 missed the first trigger - see EEGpav_1_preTR.m.
     if strcmpi(par.sID,'30'); trlidx = trlidx + 3; end %sID030 missed the first three triggers.
     
     % retrieve trialinfo from behavioural file.
-    load(fullfile(par.dirs.log,'behaviour',sprintf('3017033.03_jesmaa_0%d_001',par.sID),...
+    load(fullfile(par.dirs.log,sprintf('3017033.03_jesmaa_0%d_001',par.sID),...
         sprintf('3017033.03_jesmaa_0%d_001_results.mat',par.sID)))
 
 
@@ -699,6 +731,3 @@ for iSub = 1:par.nSub;
     seq.EEG.fb(seq.EEG.val==2)  = seq.EEG.fb(seq.EEG.val==2)+1;
     seq.EEG.splithalf           = seq.splithalf(trlidx);
 end
-% IIIa - ERP Plotting
-
-%% Preprocessing IV - Frequency Analysis
