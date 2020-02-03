@@ -6,7 +6,7 @@
 %                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% DISCLAIMER: THe Script below relies heavily on the script provided by the
+% DISCLAIMER: THe Script below is an adjusted version of the script provided by the
 % authors of the original study/dataset. FOr reading in the data, I only
 % changed High-passfilter (1Hz instead of 0.5) and otherwise left all
 % settings for importing the data (includes referencing, re-referncing
