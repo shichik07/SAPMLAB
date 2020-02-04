@@ -2,33 +2,10 @@
 EEG Analysis for the signal processing and machine learning analysis for biomedical data course
 Topic: Reversal Learning and Morbus Parkinson
 ## Contact
-Julius Kricheldorff M.Sc.
-
-julius.kricheldorff@uni-oldenburg.de
-
-Wissenschaftlicher Mitarbeiter
-
-
-Carl von Ossietzky Universität Oldenburg
-
-Fakultät VI Medizin und Gesundheitswissenschaften
-
-Neurologie
-
-Heiligengeisthöfe 4
-
-26121 Oldenburg
-
-```
-{
-  "firstName": "John",
-  "lastName": "Smith",
-  "age": 25
-}
-```
-
+Julius Kricheldorff M.Sc. - julius.kricheldorff@uni-oldenburg.de  
+Department of Neurology, Carl von Ossietzky University Oldenburg
 ## Content
-This repository contains all necessary scripts and links of the relevant data to perform a SVM analysis one Go/NoGo EEG task data.
+This repository contains all necessary scripts and links to perform a SVM analysis on Go/NoGo EEG task data.
 The purpose of this project was the analysis of a Go/NoGo EEG data set via machine learning techniques. The data set used for this analysis is a subset of the publicly avaialable [data set] by Swart et al. 2018. For the analysis large proportions of the pre-processing scripts kindly provided by Swart et al. 2018, have been used and minorly adapted. Pre-processing was performed using the [Fieldtrip toolbox] (Oostenveld, Fries, Maris and Schoffelen 2011). 
 All other analysis scripts are my own work. Note: relevant toolboxes and materials to be added.
 ## Bibliography
