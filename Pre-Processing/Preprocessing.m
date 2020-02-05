@@ -656,6 +656,7 @@ Bad_channels = {% sID, [IC to remove]
     };
 
 Bad_channels{[Bad_channels{:,1}]==iSub,2};
+
 %% Import behavioral data - again, I use parts of the scripts used by the original authors
 
 dirs.home                   = 'C:\Users\juliu\OneDrive\Dokumente\PhD-Thesis\Studying\Signal Processing Course\Experiment and Analysis\';
@@ -682,6 +683,11 @@ for iSub = 1:par.nSub;
     cd(dirs.log)
     load(filenamepostICs{iSub})
     load(filenameRej2{iSub})
+    
+    % foldername
+    id = [filenameRej1{iSub}(1:11) '_final'];
+    processed = fullfile(dirs.home,'Raw data','Processed', id);
+    
     
     % provide information on screen.
     sprintf('TF analysis of sID = %d',par.sID)
@@ -730,4 +736,6 @@ for iSub = 1:par.nSub;
     seq.EEG.fb                  = seq.EEG.outcome + 1;
     seq.EEG.fb(seq.EEG.val==2)  = seq.EEG.fb(seq.EEG.val==2)+1;
     seq.EEG.splithalf           = seq.splithalf(trlidx);
+    
+    save(processed, 'par', 'seq', 'data');
 end
