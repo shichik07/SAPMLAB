@@ -708,6 +708,13 @@ for iSub = 1:par.nSub;
     if strcmpi(par.sID,'25'); trlidx = trlidx + 1; end %sID025 missed the first trigger - see EEGpav_1_preTR.m.
     if strcmpi(par.sID,'30'); trlidx = trlidx + 3; end %sID030 missed the first three triggers.
     
+    
+    % remove the newly marked epochs from data.
+    cfg                     = [];
+    cfg.trials              = find(~rejected_trials2);
+    data                    = ft_selectdata(cfg,data);
+    
+    
     % retrieve trialinfo from behavioural file.
     load(fullfile(par.dirs.log,sprintf('3017033.03_jesmaa_0%d_001',par.sID),...
         sprintf('3017033.03_jesmaa_0%d_001_results.mat',par.sID)))
