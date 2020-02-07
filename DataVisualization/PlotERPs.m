@@ -29,8 +29,8 @@ for iSub                = 1:par.nSub;
     
     % select indexes for correctly answered Go and NoGo trials
     
-    GoCorrect           = [seq.EEG.accuracy == 1 & seq.EEG.go ==1];
-    NoGoCorrect         = [seq.EEG.accuracy == 1 & seq.EEG.go ==0];
+    GoCorrect         = [seq.EEG.accuracy == 1 & [seq.EEG.resp ==97 | seq.EEG.resp ==101]];
+    NoGoCorrect         = [seq.EEG.accuracy == 1 & seq.EEG.resp ==0];
     GoAll               = [seq.EEG.resp ==97 | seq.EEG.resp ==101]; %Left and Right responses
     
 %     
@@ -43,7 +43,7 @@ for iSub                = 1:par.nSub;
 %     
     % Data GoCorrect 
     cfg                 = [];
-    fg.preproc.lpfilter        = 'yes';
+    cfg.preproc.lpfilter        = 'yes';
     cfg.preproc.lpfreq          = 35;
     cfg.channel         = 'all';
     cfg.trials          = GoCorrect;
@@ -128,7 +128,7 @@ cfg.ylim            = [-8 8];
 cfg.channel         = {'1', '5'}; % 1 corresponds to Cz electrode, 5 to Pz electrode
 cfg.fontsize        = 18;
 cfg.linewidth       = 2;
-figure; ft_singleplotER(cfg, g_avg.all.NoGo, g_avg.all.GoInco);
+figure; ft_singleplotER(cfg, g_avg.all.NoGo, g_avg.all.GoCor);
 yline(0)
 xline(0)
 legend('NoGO','Go')
