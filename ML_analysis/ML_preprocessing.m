@@ -12,13 +12,15 @@
 
 clear all; close all; clc
 dbstop if error
-dirs.home                   = 'C:\Users\juliu\OneDrive\Dokumente\PhD-Thesis\Studying\Signal Processing Course\Experiment and Analysis\Raw data\Processed';
-cd(dirs.home);
+dirs.home                   = 'C:\Users\juliu\OneDrive\Dokumente\PhD-Thesis\Studying\Signal Processing Course\Experiment and Analysis';
+dirs.cur                    = fullfile([dirs.home, '\Raw data\Processed']);
+dirs.save                   = fullfile([dirs.home, '\Analysis\Data\']);
+cd(dirs.cur);
 
 
 ftp                         = 'C:\Users\juliu\OneDrive\Dokumente\PhD-Thesis\EEG Labor\EEG Software\fieldtrip';
 addpath(ftp);
-
+addpath(dirs.home); 
 ft_defaults
 filenameFinal                = dir(['*_final.mat']);
 filenameFinal                = {filenameFinal.name};
@@ -34,6 +36,10 @@ for iSub                = 1:par.nSub;
     % provide information on screen.
     sprintf('Plotting data loaded of sID = %d',par.sID)
     
+    % indicate save location
+    subTag                  = filenameFinal{iSub}(1:end-10);
+    filenameProc = fullfile([dirs.save, subTag, '_MLdat.mat']);
+    
     % Just use the relevant samples for the analysis. Note: I retain 0.2 ms
     % prior to the stimulus presentation. The ERP plots made me suspicious
     % that the period may already contain classification relevant
@@ -42,7 +48,8 @@ for iSub                = 1:par.nSub;
     % perform any hp filtering
     % select indexes for correctly answered Go and NoGo trials
     NoGoCorrect         = [seq.EEG.accuracy == 1 & seq.EEG.resp ==0];
-    GoCorrect           = [seq.EEG.accuracy == 1 & [seq.EEG.resp ==97 | seq.EEG.resp ==101]]; %Left and Right responses
+    GoCorrect           = [seq.EEG.accuracy == 1 & [seq.EEG.resp ==97 |...
+        seq.EEG.resp ==101]]; %Left and Right responses
     
     Trl_indices = logical([NoGoCorrect +  GoCorrect]);
     
@@ -55,7 +62,7 @@ for iSub                = 1:par.nSub;
     data                    = ft_timelockanalysis(cfg,data);
     
     data.labels             = [NoGoCorrect +  GoCorrect*2]; % 2 for Go, 1 for NoGo
-    data.labels             = data.labels(Trl_indices);
+    labels             = data.labels(Trl_indices);
     
     % Perform standardization for every channel and every trial separately
     
@@ -67,8 +74,7 @@ for iSub                = 1:par.nSub;
     % Cut data via sliding window into 40 ms bins with 20ms overlap in order
     % not to miss any relevant periods (initially wanted to do 50 and 25,
     % however that doesnt work with 500 Hz ;p
-    data.trial              = mean_sliding_window(40, 20, data.trial, 500);
-
+    trials              = mean_sliding_window(40, 20, data.trial, 500);
+    
+    save(filenameProc, 'trials', 'labels');
 end
-% Cut data via sliding window into 50 ms bins with 25ms overlap in order
-% not to miss any relevant periods
