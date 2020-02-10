@@ -1,4 +1,4 @@
-function [data_array] = mean_sliding_window(window_size, overlap, dats, time)
+function [data_array] = mean_sliding_window(windowsize, overlap, dats, time)
 %window_size in ms
 %overlap in ms
 %data array to be downsampled
