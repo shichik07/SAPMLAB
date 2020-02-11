@@ -55,6 +55,7 @@ for iSub                = 1:par.nSub;
     
     cfg                     = [];
     fg.preproc.lpfilter     = 'yes';
+    cfg.preproc.lpfreq      =  35;
     cfg.latency             = [-0.2 1]; 
     cfg.trials              = Trl_indices; 
     cfg.keeptrials          = 'yes'; % yes we want to have the single trial data
