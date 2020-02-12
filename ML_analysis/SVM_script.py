@@ -20,6 +20,36 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV
 
 """
+Sensitivity and Specificity calculation
+"""
+
+def perf_measure(y_actual, y_hat):
+    # Partial Source: 
+    #//stackoverflow.com/questions/31324218/scikit-learn-how-to-obtain-true-positive-true-negative-false-positive-and-fal
+    TP = 0
+    FP = 0
+    TN = 0
+    FN = 0
+
+    for i in range(len(y_hat)): 
+        if y_actual[i]==y_hat[i]==1:
+           TP += 1
+        if y_hat[i]==1 and y_actual[i]!=y_hat[i]:
+           FP += 1
+        if y_actual[i]==y_hat[i]==0:
+           TN += 1
+        if y_hat[i]==0 and y_actual[i]!=y_hat[i]:
+           FN += 1
+
+    accu = round((TP+TN)/len(y_hat),4) #accuracy = TP+TN /all
+    sens = round(TP/(TP+FN),4) # Sensitivity = true positives over all positives
+    spec = round(TN/(TN+FP),4) # specificity = true negatives over all negatives
+    prec = round(TP/(TP+FP),4) # precision = true positives over all predicted positives
+    F1   = round((2*TP)/(2*TP+FP+FN),4) # harmonic mean of precision and sensitivity
+    return(accu, sens, spec, F1, prec)
+
+
+"""
 Load Data
 """
 
@@ -31,6 +61,11 @@ for part in range(0,len(file)):
     file                      = os.listdir()
     p_dat                     = loadmat(file[part])
     p_dat.keys() # get keys for the imported dictionary data
+    
+    
+    # Location to save my output NOTE: if time make sure you do not overwrite (see OS)
+    save_p = os.getcwd()[:-4]+'Results\\' + file[part][:-10] +'_results.csv'
+    
     
     
     type(p_dat['labels']),p_dat['labels'].shape # data type and data size - one dim
@@ -52,10 +87,11 @@ for part in range(0,len(file)):
     my_df['accuracy']         = np.zeros(trl_dat.shape[2])
     my_df['specificity']      = np.zeros(trl_dat.shape[2])
     my_df['sensitivity']      = np.zeros(trl_dat.shape[2])
+    my_df['precision']        = np.zeros(trl_dat.shape[2])
+    my_df['F1']               = np.zeros(trl_dat.shape[2])
     my_df['gamma']            = np.zeros(trl_dat.shape[2])
     my_df['C']                = np.zeros(trl_dat.shape[2])
     my_df['v_accuracy']       = np.zeros(trl_dat.shape[2])
-    print(my_df)
                         
     
     """
@@ -96,7 +132,20 @@ for part in range(0,len(file)):
         grid.fit(X_train, y_train)
         
         
-        grid.predict(X_test)
+        print("The best parameters are %s with a score of %0.2f"
+              % (grid.best_params_, grid.best_score_))
+        
+        
+        # Save parameter from CV
+        my_df.loc[t_bin,'gamma'] =  round(grid.best_params_['gamma'],6)
+        my_df.loc[t_bin,'C'] =  round(grid.best_params_['C'],4)
+        my_df.loc[t_bin,'v_accuracy'] = round(grid.best_score_,4)
+        
+        
+        # Test performance on the test set and save output
+        output = perf_measure(grid.predict(X_test), y_test)
+        my_df.loc[t_bin, ['accuracy', 'sensitivity', 'specificity', 'precision', 'F1']] = output
+        
         """
         Note for the grid-predict scoring. Goes to show that just making sure that all
         of our classes are equally represented in the training and valdiation samples is
@@ -114,28 +163,6 @@ for part in range(0,len(file)):
         #evaluate outcome
         accuracy_score(pipe.predict(X_test), y_test)
         
-        
-        
-        """
-        How to fit C-regeuralization parameter and gamma-training example influence 
-        parameter
-        """
-        # Train classifiers
-        #
-        # For an initial search, a logarithmic grid with basis
-        # 10 is often helpful. Using a basis of 2, a finer
-        # tuning can be achieved but at a much higher cost.
-        
-        C_range = np.logspace(-2, 10, 20, base =2)
-        gamma_range = np.logspace(-9, 3, 20, base =2)
-        param_grid = dict(gamma=gamma_range, C=C_range)
-        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
-        grid = GridSearchCV(svm.SVC(), param_grid=param_grid, cv=cv)
-        grid.fit(trl_dat_1, labels)
-        
-        print("The best parameters are %s with a score of %0.2f"
-              % (grid.best_params_, grid.best_score_))
-        
         # Now we need to fit a classifier for all parameters in the 2d version
         # (we use a smaller set of parameters here because it takes a while to train)
         grid.best_params_['C']
@@ -144,3 +171,6 @@ for part in range(0,len(file)):
         pipe = make_pipeline(
                 svm.SVC(kernel='rbf',gamma = grid.best_params_['gamma'], C = grid.best_params_['C']),
                 )
+        
+       
+        my_df.to_csv(save_p)
