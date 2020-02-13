@@ -23,13 +23,13 @@ for iSub                = 1:par.nSub;
 
     load(filenameFinal{iSub});
     
-     
+    save_pl = fullfile(dirs.home,[filenameFinal{iSub}(1:12) 'ERP_data.mat'])
     % provide information on screen.
     sprintf('Plotting data loaded of sID = %d',par.sID)
     
     % select indexes for correctly answered Go and NoGo trials
     
-    GoCorrect         = [seq.EEG.accuracy == 1 & [seq.EEG.resp ==97 | seq.EEG.resp ==101]];
+    GoCorrect           = [seq.EEG.accuracy == 1 & [seq.EEG.resp ==97 | seq.EEG.resp ==101]];
     NoGoCorrect         = [seq.EEG.accuracy == 1 & seq.EEG.resp ==0];
     GoAll               = [seq.EEG.resp ==97 | seq.EEG.resp ==101]; %Left and Right responses
     
@@ -99,6 +99,8 @@ for iSub                = 1:par.nSub;
     g_avg.GoCor{iSub} = timelockGoCor;
     g_avg.GoInco{iSub} = timelockGoInco ;
     g_avg.NoGO{iSub} = timelockNoGo ;
+    
+    save(save_pl, 'timelockGoCor','timelockNoGo')
 end
 
 %% Plotting the grandaveraged data 
