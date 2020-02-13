@@ -7,7 +7,6 @@ Created on Mon Feb 10 15:22:43 2020
 
 from scipy.io import loadmat
 import os
-import random
 import numpy as np
 import pandas as pd
 from sklearn import svm
@@ -110,9 +109,18 @@ for part in range(0,len(file)):
     p_dat.keys() # get keys for the imported dictionary data
     print('Load data of participant %s' % part)
     
-    # Location to save my output NOTE: if time make sure you do not overwrite (see OS)
-    save_p = os.getcwd()[:-4]+'Results\\' + file[part][:-10] +'_results.csv'
     
+    
+    # Location to save my output
+    save_p = os.getcwd()[:-4]+'Results\\' + file[part][:-10] +'_results.csv'
+    cnt = 0
+    
+    #don't overwrite ever
+    while os.path.exists(save_p):
+        cnt += 1
+    
+        save_p = os.getcwd()[:-4]+'Results\\' + file[part][:-10]  + '_v' + str(cnt) +'_results.csv'
+	
     
     
     type(p_dat['labels']),p_dat['labels'].shape # data type and data size - one dim
@@ -148,8 +156,8 @@ for part in range(0,len(file)):
    define the parameter space that will be searched over
     """
     
-    C_range = np.logspace(-2, 10, 20, base =2)
-    gamma_range = np.logspace(-9, 3, 20, base =2)
+    C_range = np.logspace(-2, 10, 10, base =2)
+    gamma_range = np.logspace(-9, 3, 10, base =2)
     param_grid = dict(gamma=gamma_range, C=C_range)
     
     '''
@@ -176,12 +184,12 @@ for part in range(0,len(file)):
         
         
          # now create a searchCV object and fit it to the data
-#        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=part*2)
-        loo_cv = LeaveOneOut()
-#        grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
-#                            param_grid=param_grid, cv=cv, refit = True)
+        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=part*7)
+#        loo_cv = LeaveOneOut()
         grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
-                           param_grid=param_grid, cv=loo_cv, refit = True)
+                            param_grid=param_grid, cv=cv, refit = True)
+#        grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
+#                           param_grid=param_grid, cv=loo_cv, refit = True)
         grid.fit(X_train, y_train)
         
         
@@ -210,3 +218,4 @@ for part in range(0,len(file)):
         """
        
         my_df.to_csv(save_p)
+        
