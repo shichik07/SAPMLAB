@@ -18,6 +18,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import LeaveOneOut
 
 """
 Sensitivity and Specificity calculation
@@ -48,6 +49,53 @@ def perf_measure(y_actual, y_hat):
     F1   = round((2*TP)/(2*TP+FP+FN),4) # harmonic mean of precision and sensitivity
     return(accu, sens, spec, F1, prec)
 
+def oversampling(X, y, part):
+    # function determines if classes are imbalanced - if so random oversampling
+    # with replacement is performed and a new label and data array is outputed. 
+    # We do not save the label array, but the seed of the random generator, so 
+    # that we get the same random sequence everytime this script is run 
+    # and the analysis is computationally replicable. NOTE we do not shuffle the 
+    # returned data and labels because that is already done for us when splitting
+    # into training and validation
+    
+    # initialize random seed for re-sampling
+    np.random.seed(part*3)
+   
+     
+    # get indexes of label classes
+    zeros = y==0
+    ones  = y==1
+    
+    if sum(ones) is sum(zeros):
+        return X,y
+    else:
+        if sum(zeros) > sum(ones):
+            rds = np.random.choice(sum(ones), sum(zeros)-sum(ones), replace=True)
+            sel = np.flatnonzero(ones) # get indexes ones
+            sel = sel[rds] # get redrawn indexes
+            add = X[sel,:,:]
+            X   = np.append(X, add, 0) # update trials
+            y   = np.append(y, np.ones(len(rds))) #updated labels
+            
+            if sum(y==1) != sum(y==0): #double check
+                raise NameError('Oversampling failed!')
+            else:
+                print('Data has successfully been oversampled!')
+                return X,y
+        else:
+            rds = np.random.choice(sum(zeros), sum(ones)-sum(zeros), replace=True)
+            sel = np.flatnonzero(zeros) # get indexes zeros
+            sel = sel[rds] # get redrawn indexes
+            add = X[sel,:,:]
+            X   = np.append(X, add, 0) # update trials
+            y   = np.append(y, np.zeros(len(rds))) #updated labels
+            
+            if sum(y==1) != sum(y==0): #double check
+                raise NameError('Oversampling failed!')
+            else:
+                print('Data has successfully been oversampled!')
+                return X,y
+        
 
 """
 Load Data
@@ -75,6 +123,9 @@ for part in range(0,len(file)):
     labels                    = np.squeeze(np.transpose(p_dat['labels'])) - 1
     # For the data, rows = examples, columns = features 
     trl_dat                   = p_dat['trials']
+    
+    trl_dat, labels = oversampling(trl_dat, labels , part)
+    
     
     '''
     Create Data array to safe variables
@@ -107,7 +158,7 @@ for part in range(0,len(file)):
     
     for t_bin in range(0,trl_dat.shape[2]): # time bins we are going to analyse
         data = trl_dat[:,:,t_bin]
-        print('Analyzing data between %s and %0.2f milliseconds' % part)
+        #print('Analyzing data between %s and %0.2f milliseconds' % part)
 ##        #create pipeline with two classifiers, logistic ridge regression and rbf-svm - 
 ##        # important penalty parameter have to be fit seperately 
 #        pipe = make_pipeline(
@@ -125,9 +176,12 @@ for part in range(0,len(file)):
         
         
          # now create a searchCV object and fit it to the data
-        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=part*2)
+#        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=part*2)
+        loo_cv = LeaveOneOut()
+#        grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
+#                            param_grid=param_grid, cv=cv, refit = True)
         grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
-                            param_grid=param_grid, cv=cv, refit = True)
+                           param_grid=param_grid, cv=loo_cv, refit = True)
         grid.fit(X_train, y_train)
         
         
