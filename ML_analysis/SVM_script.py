@@ -43,7 +43,7 @@ def perf_measure(y_actual, y_hat):
 
     accu = round((TP+TN)/len(y_hat),4) #accuracy = TP+TN /all
     sens = round(TP/(TP+FN),4) # Sensitivity = true positives over all positives
-    spec = round(TN/(TN+FP),4) # specificity = true negatives over all negatives
+    spec =4# round(TN/(TN+FP),4) # specificity = true negatives over all negatives
     prec = round(TP/(TP+FP),4) # precision = true positives over all predicted positives
     F1   = round((2*TP)/(2*TP+FP+FN),4) # harmonic mean of precision and sensitivity
     return(accu, sens, spec, F1, prec)
@@ -55,13 +55,12 @@ Load Data
 
 os.getcwd()
 os.chdir('C:\\Users\juliu\OneDrive\Dokumente\PhD-Thesis\Studying\Signal Processing Course\Experiment and Analysis\Analysis\Data')
-
+file                      = os.listdir()
 
 for part in range(0,len(file)):
-    file                      = os.listdir()
     p_dat                     = loadmat(file[part])
     p_dat.keys() # get keys for the imported dictionary data
-    
+    print('Load data of participant %s' % part)
     
     # Location to save my output NOTE: if time make sure you do not overwrite (see OS)
     save_p = os.getcwd()[:-4]+'Results\\' + file[part][:-10] +'_results.csv'
@@ -108,16 +107,16 @@ for part in range(0,len(file)):
     
     for t_bin in range(0,trl_dat.shape[2]): # time bins we are going to analyse
         data = trl_dat[:,:,t_bin]
-        
-        #create pipeline with two classifiers, logistic ridge regression and rbf-svm - 
-        # important penalty parameter have to be fit seperately
-        pipe = make_pipeline(
-                svm.SVC(kernel='rbf',gamma = grid.best_params_['gamma'], 
-                        C = grid.best_params_['C']),
-                )
-        
+        print('Analyzing data between %s and %0.2f milliseconds' % part)
+##        #create pipeline with two classifiers, logistic ridge regression and rbf-svm - 
+##        # important penalty parameter have to be fit seperately 
+#        pipe = make_pipeline(
+#                svm.SVC(kernel='rbf',gamma = grid.best_params_['gamma'], 
+#                        C = grid.best_params_['C']),
+#                )
+#        
         #create stratified training and test splits 
-        # NOTE: RANDOM STATE IS BE FIXED FOR EVERY PARTICIPANT 
+        # NOTE: RANDOM STATE IS FIXED FOR EVERY PARTICIPANT 
         X_train, X_test, y_train, y_test = train_test_split(data, labels, 
                                                             test_size=0.2, 
                                                             stratify=labels, 
@@ -126,7 +125,7 @@ for part in range(0,len(file)):
         
         
          # now create a searchCV object and fit it to the data
-        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
+        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=part*2)
         grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
                             param_grid=param_grid, cv=cv, refit = True)
         grid.fit(X_train, y_train)
@@ -143,8 +142,8 @@ for part in range(0,len(file)):
         
         
         # Test performance on the test set and save output
-        output = perf_measure(grid.predict(X_test), y_test)
-        my_df.loc[t_bin, ['accuracy', 'sensitivity', 'specificity', 'precision', 'F1']] = output
+        performance = perf_measure(grid.predict(X_test), y_test)
+        my_df.loc[t_bin, ['accuracy', 'sensitivity', 'specificity', 'precision', 'F1']] = performance
         
         """
         Note for the grid-predict scoring. Goes to show that just making sure that all
@@ -155,22 +154,5 @@ for part in range(0,len(file)):
         with a customade script. NOTE: setting classweight to 'balanced' did do no good 
         either, same classifier behavior.
         """
-        
-        #fit the models
-        pipe.fit(X_train, y_train)
-        Pipeline(steps=[('support', svm.SVC(kernel='rbf')])
-        
-        #evaluate outcome
-        accuracy_score(pipe.predict(X_test), y_test)
-        
-        # Now we need to fit a classifier for all parameters in the 2d version
-        # (we use a smaller set of parameters here because it takes a while to train)
-        grid.best_params_['C']
-        
-        
-        pipe = make_pipeline(
-                svm.SVC(kernel='rbf',gamma = grid.best_params_['gamma'], C = grid.best_params_['C']),
-                )
-        
        
         my_df.to_csv(save_p)
