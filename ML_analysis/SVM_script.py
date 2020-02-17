@@ -7,6 +7,7 @@ Created on Mon Feb 10 15:22:43 2020
 
 from scipy.io import loadmat
 import os
+import re
 import numpy as np
 import pandas as pd
 from sklearn import svm
@@ -104,118 +105,140 @@ os.getcwd()
 os.chdir('C:\\Users\juliu\OneDrive\Dokumente\PhD-Thesis\Studying\Signal Processing Course\Experiment and Analysis\Analysis\Data')
 file                      = os.listdir()
 
+
+# Get indexes for the correct files
+word = "MLdat.mat"
+ind = np.zeros(len(file))
+for i in range(0,len(file)):
+    strin = file[i]
+    if re.search(word,file[i]) != None:
+        ind[i] = 1
+    
+
 for part in range(0,len(file)):
-    p_dat                     = loadmat(file[part])
-    p_dat.keys() # get keys for the imported dictionary data
-    print('Load data of participant %s' % part)
-    
-    
-    
-    # Location to save my output
-    save_p = os.getcwd()[:-4]+'Results\\' + file[part][:-10] +'_results.csv'
-    cnt = 0
-    
-    #don't overwrite ever
-    while os.path.exists(save_p):
-        cnt += 1
-    
-        save_p = os.getcwd()[:-4]+'Results\\' + file[part][:-10]  + '_v' + str(cnt) +'_results.csv'
-	
-    
-    
-    type(p_dat['labels']),p_dat['labels'].shape # data type and data size - one dim
-    type(p_dat['trials']),p_dat['trials'].shape # data type and data size - three dim
-    
-    
-    # labels bring labels in correct format - row one long row vector
-    labels                    = np.squeeze(np.transpose(p_dat['labels'])) - 1
-    # For the data, rows = examples, columns = features 
-    trl_dat                   = p_dat['trials']
-    
-    trl_dat, labels = oversampling(trl_dat, labels , part)
-    
-    
-    '''
-    Create Data array to safe variables
-    '''
-    
-    my_df                     = pd.DataFrame(data=np.array(range(1,trl_dat.shape[2]+1)), 
-                                             index=range(0,trl_dat.shape[2]), 
-                                             columns=['Bin'])
-    my_df['accuracy']         = np.zeros(trl_dat.shape[2])
-    my_df['specificity']      = np.zeros(trl_dat.shape[2])
-    my_df['sensitivity']      = np.zeros(trl_dat.shape[2])
-    my_df['precision']        = np.zeros(trl_dat.shape[2])
-    my_df['F1']               = np.zeros(trl_dat.shape[2])
-    my_df['gamma']            = np.zeros(trl_dat.shape[2])
-    my_df['C']                = np.zeros(trl_dat.shape[2])
-    my_df['v_accuracy']       = np.zeros(trl_dat.shape[2])
-                        
-    
-    """
-   define the parameter space that will be searched over
-    """
-    
-    C_range = np.logspace(-2, 10, 10, base =2)
-    gamma_range = np.logspace(-9, 3, 10, base =2)
-    param_grid = dict(gamma=gamma_range, C=C_range)
-    
-    '''
-    initiate loop of time bins
-    '''
-    
-    for t_bin in range(0,trl_dat.shape[2]): # time bins we are going to analyse
-        data = trl_dat[:,:,t_bin]
-        #print('Analyzing data between %s and %0.2f milliseconds' % part)
-##        #create pipeline with two classifiers, logistic ridge regression and rbf-svm - 
-##        # important penalty parameter have to be fit seperately 
-#        pipe = make_pipeline(
-#                svm.SVC(kernel='rbf',gamma = grid.best_params_['gamma'], 
-#                        C = grid.best_params_['C']),
-#                )
-#        
-        #create stratified training and test splits 
-        # NOTE: RANDOM STATE IS FIXED FOR EVERY PARTICIPANT 
-        X_train, X_test, y_train, y_test = train_test_split(data, labels, 
-                                                            test_size=0.2, 
-                                                            stratify=labels, 
-                                                            random_state=part)
+    if ind[part] != 1:
+        pass
+    else:
+        p_dat                     = loadmat(file[part])
+        p_dat.keys() # get keys for the imported dictionary data
+        print('Load data of participant %s' % part)
         
         
         
-         # now create a searchCV object and fit it to the data
-        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=part*7)
-#        loo_cv = LeaveOneOut()
-        grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
-                            param_grid=param_grid, cv=cv, refit = True)
-#        grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
-#                           param_grid=param_grid, cv=loo_cv, refit = True)
-        grid.fit(X_train, y_train)
+        # Location to save my output
+        save_p = os.getcwd()[:-4]+'Results\\' + file[part][:-10] +'_results.csv'
+        cnt = 0
+        
+        #don't overwrite ever
+        while os.path.exists(save_p):
+            cnt += 1
+        
+            save_p = os.getcwd()[:-4]+'Results\\' + file[part][:-10]  + '_v' + str(cnt) +'_results.csv'
+    	
         
         
-        print("The best parameters are %s with a score of %0.2f"
-              % (grid.best_params_, grid.best_score_))
+        type(p_dat['labels']),p_dat['labels'].shape # data type and data size - one dim
+        type(p_dat['trials']),p_dat['trials'].shape # data type and data size - three dim
         
         
-        # Save parameter from CV
-        my_df.loc[t_bin,'gamma'] =  round(grid.best_params_['gamma'],6)
-        my_df.loc[t_bin,'C'] =  round(grid.best_params_['C'],4)
-        my_df.loc[t_bin,'v_accuracy'] = round(grid.best_score_,4)
+        # labels bring labels in correct format - row one long row vector
+        labels                    = np.squeeze(np.transpose(p_dat['labels'])) - 1
+        # For the data, rows = examples, columns = features 
+        trl_dat                   = p_dat['trials']
+        
+        trl_dat, labels = oversampling(trl_dat, labels , part)
         
         
-        # Test performance on the test set and save output
-        performance = perf_measure(grid.predict(X_test), y_test)
-        my_df.loc[t_bin, ['accuracy', 'sensitivity', 'specificity', 'precision', 'F1']] = performance
+        '''
+        Create Data array to safe variables
+        '''
         
+        my_df                     = pd.DataFrame(data=np.array(range(1,trl_dat.shape[2]+1)), 
+                                                 index=range(0,trl_dat.shape[2]), 
+                                                 columns=['Bin'])
+        my_df['interval']         = np.zeros(trl_dat.shape[2])
+        my_df['accuracy']         = np.zeros(trl_dat.shape[2])
+        my_df['specificity']      = np.zeros(trl_dat.shape[2])
+        my_df['sensitivity']      = np.zeros(trl_dat.shape[2])
+        my_df['precision']        = np.zeros(trl_dat.shape[2])
+        my_df['F1']               = np.zeros(trl_dat.shape[2])
+        my_df['gamma']            = np.zeros(trl_dat.shape[2])
+        my_df['C']                = np.zeros(trl_dat.shape[2])
+        my_df['v_accuracy']       = np.zeros(trl_dat.shape[2])
+         
+    
+        start = -20 +40 *t_bin -20*t_bin
+        stop  = 20 +40 *t_bin -20*t_bin
+        
+        print(start, stop)
         """
-        Note for the grid-predict scoring. Goes to show that just making sure that all
-        of our classes are equally represented in the training and valdiation samples is
-        not a good strategy. Results indicate that we build a classifier that simply 
-        rates all available examples as the majority class and by that achieves a higher
-        classification accuracy. Strategy I intend to follow instead is undersampling 
-        with a customade script. NOTE: setting classweight to 'balanced' did do no good 
-        either, same classifier behavior.
+       define the parameter space that will be searched over
         """
-       
-        my_df.to_csv(save_p)
+        
+        C_range = np.logspace(-2, 10, 10, base =2)
+        gamma_range = np.logspace(-9, 3, 10, base =2)
+        param_grid = dict(gamma=gamma_range, C=C_range)
+        
+        '''
+        initiate loop of time bins
+        '''
+        
+        for t_bin in range(0,trl_dat.shape[2]): # time bins we are going to analyse
+            data = trl_dat[:,:,t_bin]
+            print('Analyzing data between {0} and {1} milliseconds.'.format(-20 +40 *t_bin -20*t_bin,
+                  20 +40 *t_bin -20*t_bin)) #has to be adjusted
+            
+            
+            
+    ##        #create pipeline with two classifiers, logistic ridge regression and rbf-svm - 
+    ##        # important penalty parameter have to be fit seperately 
+    #        pipe = make_pipeline(
+    #                svm.SVC(kernel='rbf',gamma = grid.best_params_['gamma'], 
+    #                        C = grid.best_params_['C']),
+    #                )
+    #        
+            #create stratified training and test splits 
+            # NOTE: RANDOM STATE IS FIXED FOR EVERY PARTICIPANT 
+            X_train, X_test, y_train, y_test = train_test_split(data, labels, 
+                                                                test_size=0.2, 
+                                                                stratify=labels, 
+                                                                random_state=part)
+            
+            
+            
+             # now create a searchCV object and fit it to the data
+            cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=part*7)
+    #        loo_cv = LeaveOneOut()
+            grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
+                                param_grid=param_grid, cv=cv, refit = True)
+    #        grid = GridSearchCV(svm.SVC(kernel='rbf', class_weight='balanced'), 
+    #                           param_grid=param_grid, cv=loo_cv, refit = True)
+            grid.fit(X_train, y_train)
+            
+            
+            print("The best parameters are %s with a score of %0.2f"
+                  % (grid.best_params_, grid.best_score_))
+            
+            
+            # Save parameter from CV
+            my_df.loc[t_bin,'gamma'] =  round(grid.best_params_['gamma'],6)
+            my_df.loc[t_bin,'C'] =  round(grid.best_params_['C'],4)
+            my_df.loc[t_bin,'v_accuracy'] = round(grid.best_score_,4)
+            
+            
+            # Test performance on the test set and save output
+            performance = perf_measure(grid.predict(X_test), y_test)
+            my_df.loc[t_bin, ['accuracy', 'sensitivity', 'specificity', 'precision', 'F1']] = performance
+            
+            """
+            Note for the grid-predict scoring. Goes to show that just making sure that all
+            of our classes are equally represented in the training and valdiation samples is
+            not a good strategy. Results indicate that we build a classifier that simply 
+            rates all available examples as the majority class and by that achieves a higher
+            classification accuracy. Strategy I intend to follow instead is undersampling 
+            with a customade script. NOTE: setting classweight to 'balanced' did do no good 
+            either, same classifier behavior.
+            """
+           
+            my_df.to_csv(save_p)
         
