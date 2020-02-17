@@ -23,7 +23,6 @@ for iSub                = 1:par.nSub;
 
     load(filenameFinal{iSub});
     
-    save_pl = fullfile(dirs.home,[filenameFinal{iSub}(1:12) 'ERP_data.mat'])
     % provide information on screen.
     sprintf('Plotting data loaded of sID = %d',par.sID)
     
@@ -100,7 +99,6 @@ for iSub                = 1:par.nSub;
     g_avg.GoInco{iSub} = timelockGoInco ;
     g_avg.NoGO{iSub} = timelockNoGo ;
     
-    save(save_pl, 'timelockGoCor','timelockNoGo')
 end
 
 %% Plotting the grandaveraged data 
@@ -160,3 +158,62 @@ legend('Difference Wave')
 % differences between the two conditions seem relatively small, as
 % indicated by the difference wave. Based on the ERP data alone I would be
 % very uncertain with regards to any conclusion.
+
+
+%% Save ERP data for Cz and Pz electrodes
+cfg.channel         = {'1', '5'};
+
+All_dataGo              = zeros(2,3000,5);
+All_dataNoGo            = zeros(2,3000,5);
+
+for iSub                = 1:5;
+    load(filenameFinal{iSub});
+    % provide information on screen.
+    sprintf('Plotting data loaded of sID = %d',par.sID)
+    
+    % select indexes for correctly answered Go and NoGo trials
+    
+    GoCorrect           = [seq.EEG.accuracy == 1 & [seq.EEG.resp ==97 | seq.EEG.resp ==101]];
+    NoGoCorrect         = [seq.EEG.accuracy == 1 & seq.EEG.resp ==0];
+    GoAll               = [seq.EEG.resp ==97 | seq.EEG.resp ==101]; %Left and Right responses
+ 
+    % Data GoCorrect 
+    cfg                 = [];
+    cfg.preproc.lpfilter        = 'yes';
+    cfg.preproc.lpfreq          = 35;
+    cfg.channel         = {'1', '5'};
+    cfg.trials          = GoCorrect;
+    cfg.keeptrials      = 'no'; % yes if necesaary for the statistics to work
+    timelockGoCor       = ft_timelockanalysis(cfg,data);
+    
+    % Data GoIncorrect
+    cfg                 = [];
+    cfg.preproc.lpfilter        = 'yes';
+    cfg.preproc.lpfreq          = 35;
+    cfg.channel         = {'1', '5'};
+    cfg.trials          = GoCorrect;
+    cfg.keeptrials      = 'no'; % necesaary for the statistics to work
+    timelockGoInco      = ft_timelockanalysis(cfg,data);
+    
+    % Data NoGoCorrect
+    cfg                 = [];
+    cfg.preproc.lpfilter        = 'yes';
+    cfg.preproc.lpfreq          = 35;
+    cfg.channel         = {'1', '5'};
+    cfg.trials          = NoGoCorrect;
+    cfg.keeptrials      = 'no'; % necesaary for the statistics to work
+    timelockNoGo        = ft_timelockanalysis(cfg,data);
+    
+    % Plots for a single channel --> ft_singleplotER() at Fz for the
+    % frontal P3 - Fz = 1, Pz = 5
+  
+    
+    time                = timelockGoCor.time;
+    a = timelockGoCor.avg;
+    All_dataGo(1:2,:,iSub)    = timelockGoCor.avg;
+    All_dataNoGo(:,:,iSub)  = timelockNoGo.avg;
+end
+
+dirs.ML = 'C:\Users\juliu\OneDrive\Dokumente\PhD-Thesis\Studying\Signal Processing Course\Experiment and Analysis\Analysis\Data';
+save_pl = fullfile(dirs.ML,'ERP_data_all.mat');
+save(save_pl, 'All_dataGo','All_dataNoGo', 'time')
