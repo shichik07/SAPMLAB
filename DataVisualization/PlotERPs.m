@@ -163,8 +163,8 @@ legend('Difference Wave')
 %% Save ERP data for Cz and Pz electrodes
 cfg.channel         = {'1', '5'};
 
-All_dataGo              = zeros(2,3000,5);
-All_dataNoGo            = zeros(2,3000,5);
+All_dataGo              = zeros(2,601,5);
+All_dataNoGo            = zeros(2,601,5);
 
 for iSub                = 1:5;
     load(filenameFinal{iSub});
@@ -181,6 +181,7 @@ for iSub                = 1:5;
     cfg                 = [];
     cfg.preproc.lpfilter        = 'yes';
     cfg.preproc.lpfreq          = 35;
+    cfg.latency            = [-0.2 1.0]; %indicate time window
     cfg.channel         = {'1', '5'};
     cfg.trials          = GoCorrect;
     cfg.keeptrials      = 'no'; % yes if necesaary for the statistics to work
@@ -190,6 +191,7 @@ for iSub                = 1:5;
     cfg                 = [];
     cfg.preproc.lpfilter        = 'yes';
     cfg.preproc.lpfreq          = 35;
+    cfg.latency           = [-0.2 1.0]; %indicate time window
     cfg.channel         = {'1', '5'};
     cfg.trials          = GoCorrect;
     cfg.keeptrials      = 'no'; % necesaary for the statistics to work
@@ -198,6 +200,7 @@ for iSub                = 1:5;
     % Data NoGoCorrect
     cfg                 = [];
     cfg.preproc.lpfilter        = 'yes';
+    cfg.latency           = [-0.2 1.0]; %indicate time window
     cfg.preproc.lpfreq          = 35;
     cfg.channel         = {'1', '5'};
     cfg.trials          = NoGoCorrect;
