@@ -71,7 +71,6 @@ for i in range(0,len(file)):
         ind = i
    
 # load data
-
 p_dat                     = loadmat(file[ind])
 p_dat.keys() # get keys for the imported dictionary data
 
@@ -127,7 +126,7 @@ CI_go, avg_go, CI_nogo, avg_nogo = within_CI(Go_data, NoGo_data, 0.05, 2, 5)
 
 """
 Finally lets start plotting the ERPS
-Code is Courtesy of Travis DeWolf:    
+Code is mostly courtesy of Travis DeWolf:    
 https://studywolf.wordpress.com/2017/11/21/matplotlib-legends-for-mean-and-confidence-interval-plots/ 
 """
 import matplotlib.pyplot as plt
@@ -172,6 +171,8 @@ class LegendObject(object):
             handlebox.add_artist(patch1)
  
         return patch
+    
+# Time parameter and x-axis ticks   
 time = np.array([-200,0,200,400,600,800,1000])
 pos = np.array([0,100,200,300,400,500,600])
 
@@ -207,7 +208,7 @@ bg = np.array([1, 1, 1])  # background of the legend is white
 colors = ['black', 'blue', 'green']
 # with alpha = .5, the faded color is the average of the background and color
 colors_faded = [(np.array(cc.to_rgb(color)) + bg) / 2.0 for color in colors]
- git 
+
 plt.legend([0, 1], ['GoData', 'NoGoData'],
            handler_map={
                0: LegendObject(colors[1], colors_faded[1],dashed=True),
@@ -220,21 +221,21 @@ plt.grid()
 plt.show()
 
 
-
-
-
-
-
-
-
 """"
 Plot ML Analysis results
+
+Careful! My classification results were switched! changed it now see the
+re.search thing needs to be fixed
+
+ALso note that the display of the time axis at this point is only approximate. 
+It changed after I switched from 40ms time bins to 60ms time bins and I didn't 
+really care too much to fix it anymore since it should only afect the last 200ms, 
+which are not relevant anyways in my classification.
 """"
 
-
-
+# Indicate data directory
 os.getcwd()
-os.chdir('C:\\Users\juliu\OneDrive\Dokumente\PhD-Thesis\Studying\Signal Processing Course\Experiment and Analysis\Analysis\Results2')
+os.chdir('C:\\Users\juliu\OneDrive\Dokumente\PhD-Thesis\Studying\Signal Processing Course\Experiment and Analysis\Analysis\Results')
 file                      = os.listdir()
 
 
@@ -247,24 +248,26 @@ for i in range(0,len(file)):
     strin = file[i]
     if re.search(word,file[i]) != None:
         ind[i] = 1
-
+# Concatenate the results
+start = 0        
 for i in range(0,len(file)):
     if ind[i] != 1:
         pass
     else:
         data = pd.read_csv(file[i]) 
-        if i !=0:
-            df_accL = pd.concat([df_accL, data.accuracy],axis =1)
-            df_F1L  = pd.concat([df_F1L, data.F1],axis =1)
-            df_sensitivityL = pd.concat([df_sensitivityL,data.sensitivity], axis =1)
-            df_specificityL  = pd.concat([df_specificityL ,data.specificity], axis =1)
-            df_precisionL = pd.concat([df_precisionL,data.precision], axis =1)
+        if start ==0:
+            df_accR = data.accuracy
+            df_F1R  = data.F1
+            df_sensitivityR = data.sensitivity
+            df_specificityR  = data.specificity
+            df_precisionR = data.precision
+            start +=1
         else:
-            df_accL = data.accuracy
-            df_F1L  = data.F1
-            df_sensitivityL = data.sensitivity
-            df_specificityL  = data.specificity
-            df_precisionL = data.precision
+            df_accR = pd.concat([df_accR, data.accuracy],axis =1)
+            df_F1R  = pd.concat([df_F1R, data.F1],axis =1)
+            df_sensitivityR = pd.concat([df_sensitivityR,data.sensitivity], axis =1)
+            df_specificityR  = pd.concat([df_specificityR ,data.specificity], axis =1)
+            df_precisionR = pd.concat([df_precisionR,data.precision], axis =1)
 
 # Get indexes for the linear classifier files
 word = "rbfK_results.csv"
@@ -276,24 +279,26 @@ for i in range(0,len(file)):
     if re.search(word,file[i]) != None:
         ind[i] = 1
 
+# Concatenate the results
+start = 0    
 for i in range(0,len(file)):
     if ind[i] != 1:
         pass
     else:
         data = pd.read_csv(file[i]) 
-        if i !=1:
-            df_accR = pd.concat([df_accR, data.accuracy],axis =1)
-            df_F1R  = pd.concat([df_F1R, data.F1],axis =1)
-            df_sensitivityR = pd.concat([df_sensitivityR,data.sensitivity], axis =1)
-            df_specificityR  = pd.concat([df_specificityR ,data.specificity], axis =1)
-            df_precisionR = pd.concat([df_precisionR,data.precision], axis =1)
+        if start ==0:
+            df_accL = data.accuracy
+            df_F1L  = data.F1
+            df_sensitivityL = data.sensitivity
+            df_specificityL  = data.specificity
+            df_precisionL = data.precision
+            start +=1
         else:
-            df_accR = data.accuracy
-            df_F1R  = data.F1
-            df_sensitivityR = data.sensitivity
-            df_specificityR  = data.specificity
-            df_precisionR = data.precision
-            
+            df_accL = pd.concat([df_accL, data.accuracy],axis =1)
+            df_F1L  = pd.concat([df_F1L, data.F1],axis =1)
+            df_sensitivityL = pd.concat([df_sensitivityL,data.sensitivity], axis =1)
+            df_specificityL  = pd.concat([df_specificityL ,data.specificity], axis =1)
+            df_precisionL = pd.concat([df_precisionL,data.precision], axis =1)
 """
 Now plot accuracies 
 """
@@ -311,19 +316,20 @@ def plot_mean_SE(mean, SE, pos, time, ylab, color_mean=None, color_shading=None)
 #    time = np.array([-200,0,200,400,600,800,1000])
 #    pos = np.array([0,100,200,300,400,500,600])
     plt.xticks(pos, time)
-    
+
+# Time parameter and x-axis ticks NOTE: these are slightly off toward the end   
 time = np.array([-200,0,200,400,600,800,1000])
-pos = np.array([0,10,20,30,40,50,60])
+pos = np.array([0,5,10,15,20,25,28])
 ylab = 'Classification Accuracy'
+
+#Plot figure
 fig = plt.figure(1, figsize=(8, 4.5))
 plot_mean_SE(df_accR.mean(1), df_accR.sem(1), pos, time, ylab, color_mean='k--', color_shading='k')
 plot_mean_SE(df_accL.mean(1), df_accL.sem(1), pos, time, ylab, color_mean='b', color_shading='b')
-
 bg = np.array([1, 1, 1])  # background of the legend is white
 colors = ['black', 'blue', 'green']
 # with alpha = .5, the faded color is the average of the background and color
 colors_faded = [(np.array(cc.to_rgb(color)) + bg) / 2.0 for color in colors]
- 
 plt.legend([0, 1], ['Non-Linear Classifier', 'Linear Classifier'],
            handler_map={
                0: LegendObject(colors[0], colors_faded[0], dashed=True),
@@ -338,6 +344,7 @@ plt.show()
 """
 Now plot F1 scores
 """
+
 ylab = 'F1 Score'
 fig = plt.figure(1, figsize=(8, 4.5))
 plot_mean_SE(df_F1R.mean(1), df_F1R.sem(1), pos, time, ylab, color_mean='k--', color_shading='k')
@@ -373,9 +380,12 @@ def plot_mean(mean, pos, time, ylab, color_mean=None):
 #    pos = np.array([0,100,200,300,400,500,600])
     plt.xticks(pos, time)
 
+# Time parameter and x-axis ticks 
 time = np.array([-200,0,200,400,600,800,1000])
-pos = np.array([0,10,20,30,40,50,60])
+pos = np.array([0,5,10,15,20,25,28])
 ylab = 'Classification Performance'
+
+#Plot figure
 fig = plt.figure(1, figsize=(8, 4.5))
 plot_mean(df_specificityL.mean(1), pos, time, ylab, color_mean='g--')
 plot_mean(df_sensitivityL.mean(1), pos, time, ylab, color_mean='b--')
@@ -401,110 +411,6 @@ plt.legend([0, 1, 2, 3, 4, 5], ['SpecificityL', 'SensitivityL', 'PrecisionL',
             })
  
 plt.title('Classification Metrics - All')
-plt.tight_layout()
-plt.grid()
-plt.show()
-
-'''
-We note that the specificity Values of participant 1(17) seem to drive the overall
-specificity of the classification. Hence we here plot the results without said participant
-'''
-df_specificityR_ = df_specificityR.iloc [:,[1,2,3,4]] 
-df_sensitivityR_ = df_sensitivityR.iloc [:,[1,2,3,4]] 
-df_precisionR_   = df_precisionR.iloc [:,[1,2,3,4]]
-df_specificityL_ = df_specificityL.iloc [:,[1,2,3,4]] 
-df_sensitivityL_ = df_sensitivityL.iloc [:,[1,2,3,4]] 
-df_precisionL_   = df_precisionL.iloc [:,[1,2,3,4]]
-
-time = np.array([-200,0,200,400,600,800,1000])
-pos = np.array([0,10,20,30,40,50,60])
-ylab = 'Classification Performance'
-fig = plt.figure(1, figsize=(8, 4.5))
-plot_mean(df_specificityL_.mean(1), pos, time, ylab, color_mean='g--')
-plot_mean(df_sensitivityL_.mean(1), pos, time, ylab, color_mean='b--')
-plot_mean(df_precisionL_.mean(1), pos, time, ylab, color_mean='k--')
-plot_mean(df_specificityR_.mean(1), pos, time, ylab, color_mean='g')
-plot_mean(df_sensitivityR_.mean(1), pos, time, ylab, color_mean='b')
-plot_mean(df_precisionR_.mean(1), pos, time, ylab, color_mean='k')
-
-bg = np.array([1, 1, 1])  # background of the legend is white
-colors = ['black', 'blue', 'green']
-# with alpha = .5, the faded color is the average of the background and color
-colors_faded = [(np.array(cc.to_rgb(color)) + bg) / 2.0 for color in colors]
- 
-plt.legend([0, 1, 2, 3, 4, 5], ['SpecificityL', 'SensitivityL', 'PrecisionL', 
-           'SpecificityR', 'SensitivityR', 'PrecisionR'],
-           handler_map={
-               0: LegendObject(colors[2], colors_faded[2], dashed=True),
-               1: LegendObject(colors[1], colors_faded[1], dashed=True),
-               2: LegendObject(colors[0], colors_faded[0], dashed=True),
-               3: LegendObject(colors[2], colors_faded[2]),
-               4: LegendObject(colors[1], colors_faded[1]),
-               5: LegendObject(colors[0], colors_faded[0]),
-            })
- 
-plt.title('Classification Metrics - 4')
-plt.tight_layout()
-plt.grid()
-plt.show()
-
-
-
-
-
-
-
-"""
-Plot Accuracy and F1 again for good measure -1
-"""
-df_accR_ = df_accR.iloc [:,[1,2,3,4]] 
-df_accL_ = df_accL.iloc [:,[1,2,3,4]] 
-df_F1R_ = df_F1R.iloc [:,[1,2,3,4]] 
-df_F1L_ = df_F1L.iloc [:,[1,2,3,4]] 
-
-time = np.array([-200,0,200,400,600,800,1000])
-pos = np.array([0,10,20,30,40,50,60])
-ylab = 'Classification Accuracy'
-fig = plt.figure(1, figsize=(8, 4.5))
-plot_mean_SE(df_accR_.mean(1), df_accR_.sem(1), pos, time, ylab, color_mean='k--', color_shading='k')
-plot_mean_SE(df_accL_.mean(1), df_accL_.sem(1), pos, time, ylab, color_mean='b', color_shading='b')
-
-bg = np.array([1, 1, 1])  # background of the legend is white
-colors = ['black', 'blue', 'green']
-# with alpha = .5, the faded color is the average of the background and color
-colors_faded = [(np.array(cc.to_rgb(color)) + bg) / 2.0 for color in colors]
- 
-plt.legend([0, 1], ['Non-Linear Classifier', 'Linear Classifier'],
-           handler_map={
-               0: LegendObject(colors[0], colors_faded[0], dashed=True),
-               1: LegendObject(colors[1], colors_faded[1]),
-            })
- 
-plt.title('Classification Accuracy - 1')
-plt.tight_layout()
-plt.grid()
-plt.show()
-
-"""
-Now plot F1 scores - 1
-"""
-ylab = 'F1 Score'
-fig = plt.figure(1, figsize=(8, 4.5))
-plot_mean_SE(df_F1R_.mean(1), df_F1R_.sem(1), pos, time, ylab, color_mean='k--', color_shading='k')
-plot_mean_SE(df_F1L_.mean(1), df_F1L_.sem(1), pos, time, ylab, color_mean='darkslategray', color_shading='g')
-
-bg = np.array([1, 1, 1])  # background of the legend is white
-colors = ['black', 'blue', 'green']
-# with alpha = .5, the faded color is the average of the background and color
-colors_faded = [(np.array(cc.to_rgb(color)) + bg) / 2.0 for color in colors]
- 
-plt.legend([0, 1], ['Non-Linear Classifier', 'Linear Classifier'],
-           handler_map={
-               0: LegendObject(colors[0], colors_faded[0], dashed=True),
-               1: LegendObject(colors[2], colors_faded[2]),
-            })
- 
-plt.title('Classification F1 Scores - 1')
 plt.tight_layout()
 plt.grid()
 plt.show()
